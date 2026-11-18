@@ -1,0 +1,45 @@
+name: Data Schema Code Convention
+
+on:
+  push:
+    paths:
+      - '.github/workflows/DataSchemaCodeConvention.yml'
+      - 'DataSchema*.json'
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Which JSON schema should be checked?'
+        required: true
+        type: choice
+        default: original
+        options:
+          - original
+          - modified
+
+permissions:
+  contents: read
+
+jobs:
+  JSONLinter:
+    name: Validate selected JSON schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install JSONLint
+        run: npm install --global @prantlf/jsonlint
+      - name: Check JSON coding conventions
+        env:
+          VARIANT: ${{ inputs.variant || 'original' }}
+        run: |
+          if [ "$VARIANT" = 'modified' ]; then
+            target='DataSchemaModified.json'
+          else
+            target='DataSchema.json'
+          fi
+          echo "Validating: $target"
+          jsonlint "$target"

@@ -1,0 +1,43 @@
+name: Program Code Convention
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ProgramCodeConvention.yml'
+      - 'ProgramCode*.js'
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Which JavaScript program should be checked?'
+        required: true
+        type: choice
+        default: original
+        options:
+          - original
+          - modified
+
+permissions:
+  contents: read
+
+jobs:
+  JavaScriptLinter:
+    name: Validate selected JavaScript module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript coding conventions with Biome
+        env:
+          VARIANT: ${{ inputs.variant || 'original' }}
+        run: |
+          if [ "$VARIANT" = 'modified' ]; then
+            target='ProgramCodeModified.js'
+          else
+            target='ProgramCode.js'
+          fi
+          echo "Checking: $target"
+          npx --yes @biomejs/biome@2.6.8 check "$target"
